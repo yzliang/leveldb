@@ -47,6 +47,7 @@ class Slice {
 
   // Return the ith byte in the referenced data.
   // REQUIRES: n < size()
+  // The return type isn't a lvalue, so we can't modify the content.
   char operator[](size_t n) const {
     assert(n < size());
     return data_[n];
@@ -79,6 +80,10 @@ class Slice {
 
  private:
   const char* data_;
+
+  // size_t is alias of one of fundamental unsigned interger types.
+  // It is used as the return type of the sizeof operator, and as argument
+  // type or return type in many functions of <cstring>.
   size_t size_;
 
   // Intentionally copyable
@@ -95,6 +100,9 @@ inline bool operator!=(const Slice& x, const Slice& y) {
 
 inline int Slice::compare(const Slice& b) const {
   const int min_len = (size_ < b.size_) ? size_ : b.size_;
+
+  // Because leveldb allows character '\0' in byte arrays, we can't use strcmp
+  // or strncmp to do the comparison.
   int r = memcmp(data_, b.data_, min_len);
   if (r == 0) {
     if (size_ < b.size_) r = -1;
